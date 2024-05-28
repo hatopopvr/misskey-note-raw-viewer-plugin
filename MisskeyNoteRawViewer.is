@@ -1,0 +1,150 @@
+/// @ 0.17.0
+### {
+  name: "ノートのRawデータを表示する"
+  version: "0.1.0"
+  author: "はとぽぷ(@hatopop_vr@misskey.io)"
+  description: "ノートのRawデータを表示するプラグインです。"
+  permissions: ["read:reactions"]
+  config: {
+    indent: {
+      type: "number",
+      label: "インデント",
+      description: "YAMLやJSONのインデントを設定します。",
+      default: 2
+    },
+    yamlIsEnable: {
+      type: "boolean",
+      label: "YAML表示を有効にする",
+      description: "YAML表示を有効にするかどうかを設定します。",
+      default: false
+    },
+    jsonIsEnable: {
+      type: "boolean",
+      label: "JSON表示を有効にする",
+      description: "JSON表示を有効にするかどうかを設定します。",
+      default: false
+    },
+    formattedJsonIsEnable: {
+      type: "boolean",
+      label: "Formatted JSON表示を有効にする",
+      description: "Formatted JSON表示を有効にするかどうかを設定します。",
+      default: true
+    }
+  }
+}
+
+// ServerNameの取得
+let SERVER_NAME = Mk:url().split('/')[2]
+// インデントの取得
+let INDENT = Plugin:config.indent
+var INDENT_STR = ""
+for INDENT INDENT_STR = `{INDENT_STR} `
+
+// 日時をフォーマットして取得する関数
+@getCurrentDateTime() {
+    return `{Date:year()}-{Date:month()}-{Date:day()} {Date:hour()}:{Date:minute()}:{Date:second()}.{Math:floor(Date:now()%1000/100)}`
+}
+
+// ログ出力関数を定義
+@logInfo(message) {
+    let dateTime = getCurrentDateTime()
+    print(`{dateTime} - INFO - {message}`)
+}
+
+@logError(message) {
+    let dateTime = getCurrentDateTime()
+    print(`{dateTime} - ERROR - {message}`)
+}
+
+// オブジェクトをYAML形式にフォーマットする関数
+@obj2yaml(obj){
+  let func = @(obj, nest){
+    var yaml = ""
+    let nextNest = `{nest}{INDENT_STR}`
+    if (Core:type(obj) == "obj") {
+      let keys = Obj:keys(obj)
+      each let key keys yaml = `{yaml}{Str:lf}{nest}{key}: {func(Obj:get(obj key), nextNest)}`
+      return yaml
+    }
+    if (Core:type(obj) == "arr") {
+      each let item obj yaml = `{yaml}{Str:lf}{nest} - {func(item, nextNest)}`
+      return yaml
+    }
+    return `{obj}`
+  }
+  return func(obj, "")
+}
+
+// オブジェクトを整形されたJSON形式にフォーマットする関数
+@obj2json(obj){
+  let funcObj = @(obj, nest){
+    var json = ""
+    let nextNest = `{nest}{INDENT_STR}`
+    if (Core:type(obj) == "obj") {
+      let keys = Obj:keys(obj)
+      if (keys.len == 0) {
+        return `{json}\{\}`
+      }
+      json = `{json}\{`
+      each let key keys json = `{json}{Str:lf}{nextNest}"{key}": {funcObj(Obj:get(obj key), nextNest)},`
+      // 最後のカンマを削除
+      json = json.slice(0, json.len - 1)
+      json = `{json}{Str:lf}{nest}\}`
+      return json
+    }
+    if (Core:type(obj) == "arr") {
+      if (obj.len == 0) {
+        return `{json}[]`
+      }
+      json = `{json}[`
+      each let item obj json = `{json}{Str:lf}{nextNest}{funcObj(item, nextNest)},`
+      // 最後のカンマを削除
+      json = json.slice(0, json.len - 1)
+      json = `{json}{Str:lf}{nest}]`
+      return json
+    }
+    if (Core:type(obj) == "str") {
+      return `"{obj}"`
+    }
+    return `{obj}`
+  }
+  return funcObj(obj, "")
+}
+
+@misskeyNoteRawViewer(note) {
+    logInfo(`==================================================`)
+    logInfo(`Viewing raw for note ID {note.id}`)
+
+    if Plugin:config.yamlIsEnable {
+        logInfo(`Displaying raw for note ID {note.id} in YAML format`)
+        var formatted_note_raw_yaml = obj2yaml(note)
+        var result_yaml = `\`\`\`yaml
+{formatted_note_raw_yaml}
+\`\`\``
+        Mk:dialog(`**Raw: YAML**` result_yaml)
+    }
+
+    if Plugin:config.jsonIsEnable {
+        logInfo(`Displaying raw for note ID {note.id} in JSON format`)
+        var note_raw = Json:stringify(note)
+        var result_json = `\`\`\`json
+{note_raw}
+\`\`\``
+        Mk:dialog(`**Raw: JSON**` result_json)
+    }
+
+    if Plugin:config.formattedJsonIsEnable {
+        logInfo(`Displaying raw for note ID {note.id} in formatted JSON format`)
+        var formatted_note_raw_json = obj2json(note)
+        var result_json = `\`\`\`json
+{formatted_note_raw_json}
+\`\`\``
+        Mk:dialog(`**Raw: JSON formatted**` result_json)
+    }
+
+    logInfo(`Completed viewing raw for note ID {note.id}`)
+    logInfo(`==================================================`)
+}
+
+// リアクションの詳細を取得するボタンの登録
+Plugin:register_note_action(`</>Raw` @(note) {misskeyNoteRawViewer(note)})
