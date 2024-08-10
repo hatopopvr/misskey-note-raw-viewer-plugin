@@ -1,10 +1,14 @@
 # misskey-note-raw-viewer-plugin
 
-MisskeyノートのRAWデータを表示するMisskeyプラグインです。[AiScript](https://github.com/syuilo/aiscript/tree/master)によって記述されています。
+MisskeyノートのRAWデータを整形されたJSON形式で表示するMisskeyプラグインです。
+[AiScript](https://github.com/syuilo/aiscript/tree/master)によって記述されています。
 
-## 機能
+## 使い方
 
-- ノートのRAWデータをYAML形式、JSON形式、整形されたJSON形式で表示
+- ノートの`･･･`メニューからプラグインボタン`</>Raw`を選択すると、ノートのRAWデータを整形されたJSON形式で表示します。
+- Rawデータは右上のボタンからクリップボードにコピーが可能です。
+
+![image](images/image_001.gif)
 
 ## 必要な権限
 
@@ -19,23 +23,22 @@ MisskeyノートのRAWデータを表示するMisskeyプラグインです。[Ai
 3. ダウンロードした`MisskeyNoteRawViewer.is`ファイルの内容をコピーし、テキストエリアに貼り付けます。
 4. `インストール`ボタンを押します。
 
-## 使い方
-
-1. ノートの詳細ビューで、`</>Raw`ボタンをクリックします。
-2. 設定に基づいて、選択された表示形式でノートのRAWデータが表示されます。
-
 ## 設定
 
 プラグインの設定では、以下の項目を指定できます。
 
 - **インデント**: YAMLやJSONのインデントを設定します。（デフォルト: 2）
-- **YAML表示を有効にする**: YAML表示を有効にするかどうかを設定します。（デフォルト: false）
-- **JSON表示を有効にする**: JSON表示を有効にするかどうかを設定します。（デフォルト: false）
-- **Formatted JSON表示を有効にする**: Formatted JSON表示を有効にするかどうかを設定します。（デフォルト: true）
 
-## 注意事項
-
-- 表示形式によっては、データの大きさや構造に応じて表示が崩れる可能性があります。
+##  カスタムCSSでのダイアログの表示調整
+以下のCSSは、ダイアログのテキスト表示を左詰めにし、ウインドウサイズを拡大するためのものです。デフォルトではテキストは中央揃えで、ウインドウサイズが小さいため、カスタムCSSで調整することをお勧めします。
+```css
+.xa5A4 {
+    min-width: 320px;
+    max-width: 2000px;  /* original 480px; */
+    box-sizing: border-box;
+    text-align: left; /* original center; */
+}
+```
 
 ## 作者
 [hatopop_vr](https://misskey.io/@hatopop_vr)

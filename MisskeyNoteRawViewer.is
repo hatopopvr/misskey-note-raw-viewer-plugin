@@ -9,26 +9,8 @@
     indent: {
       type: "number",
       label: "インデント",
-      description: "YAMLやJSONのインデントを設定します。",
+      description: "JSONのインデントを設定します。",
       default: 2
-    },
-    yamlIsEnable: {
-      type: "boolean",
-      label: "YAML表示を有効にする",
-      description: "YAML表示を有効にするかどうかを設定します。",
-      default: false
-    },
-    jsonIsEnable: {
-      type: "boolean",
-      label: "JSON表示を有効にする",
-      description: "JSON表示を有効にするかどうかを設定します。",
-      default: false
-    },
-    formattedJsonIsEnable: {
-      type: "boolean",
-      label: "Formatted JSON表示を有効にする",
-      description: "Formatted JSON表示を有効にするかどうかを設定します。",
-      default: true
     }
   }
 }
@@ -47,46 +29,27 @@ for INDENT INDENT_STR = `{INDENT_STR} `
 
 // ログ出力関数を定義
 @logInfo(message) {
-    let dateTime = getCurrentDateTime()
-    print(`{dateTime} - INFO - {message}`)
+    let date_time = getCurrentDateTime()
+    print(`{date_time} - INFO - {message}`)
 }
 
 @logError(message) {
-    let dateTime = getCurrentDateTime()
-    print(`{dateTime} - ERROR - {message}`)
-}
-
-// オブジェクトをYAML形式にフォーマットする関数
-@obj2yaml(obj){
-  let func = @(obj, nest){
-    var yaml = ""
-    let nextNest = `{nest}{INDENT_STR}`
-    if (Core:type(obj) == "obj") {
-      let keys = Obj:keys(obj)
-      each let key keys yaml = `{yaml}{Str:lf}{nest}{key}: {func(Obj:get(obj key), nextNest)}`
-      return yaml
-    }
-    if (Core:type(obj) == "arr") {
-      each let item obj yaml = `{yaml}{Str:lf}{nest} - {func(item, nextNest)}`
-      return yaml
-    }
-    return `{obj}`
-  }
-  return func(obj, "")
+    let date_time = getCurrentDateTime()
+    print(`{date_time} - ERROR - {message}`)
 }
 
 // オブジェクトを整形されたJSON形式にフォーマットする関数
 @obj2json(obj){
   let funcObj = @(obj, nest){
     var json = ""
-    let nextNest = `{nest}{INDENT_STR}`
+    let next_nest = `{nest}{INDENT_STR}`
     if (Core:type(obj) == "obj") {
       let keys = Obj:keys(obj)
       if (keys.len == 0) {
         return `{json}\{\}`
       }
       json = `{json}\{`
-      each let key keys json = `{json}{Str:lf}{nextNest}"{key}": {funcObj(Obj:get(obj key), nextNest)},`
+      each let key keys json = `{json}{Str:lf}{next_nest}"{key}": {funcObj(Obj:get(obj key), next_nest)},`
       // 最後のカンマを削除
       json = json.slice(0, json.len - 1)
       json = `{json}{Str:lf}{nest}\}`
@@ -97,7 +60,7 @@ for INDENT INDENT_STR = `{INDENT_STR} `
         return `{json}[]`
       }
       json = `{json}[`
-      each let item obj json = `{json}{Str:lf}{nextNest}{funcObj(item, nextNest)},`
+      each let item obj json = `{json}{Str:lf}{next_nest}{funcObj(item, next_nest)},`
       // 最後のカンマを削除
       json = json.slice(0, json.len - 1)
       json = `{json}{Str:lf}{nest}]`
@@ -115,36 +78,16 @@ for INDENT INDENT_STR = `{INDENT_STR} `
     logInfo(`==================================================`)
     logInfo(`Viewing raw for note ID {note.id}`)
 
-    if Plugin:config.yamlIsEnable {
-        logInfo(`Displaying raw for note ID {note.id} in YAML format`)
-        var formatted_note_raw_yaml = obj2yaml(note)
-        var result_yaml = `\`\`\`yaml
-{formatted_note_raw_yaml}
-\`\`\``
-        Mk:dialog(`**Raw: YAML**` result_yaml)
-    }
-
-    if Plugin:config.jsonIsEnable {
-        logInfo(`Displaying raw for note ID {note.id} in JSON format`)
-        var note_raw = Json:stringify(note)
-        var result_json = `\`\`\`json
-{note_raw}
-\`\`\``
-        Mk:dialog(`**Raw: JSON**` result_json)
-    }
-
-    if Plugin:config.formattedJsonIsEnable {
-        logInfo(`Displaying raw for note ID {note.id} in formatted JSON format`)
-        var formatted_note_raw_json = obj2json(note)
-        var result_json = `\`\`\`json
+    logInfo(`Displaying raw for note ID {note.id} in formatted JSON format`)
+    var formatted_note_raw_json = obj2json(note)
+    var result_json = `\`\`\`json
 {formatted_note_raw_json}
 \`\`\``
-        Mk:dialog(`**Raw: JSON formatted**` result_json)
-    }
+    Mk:dialog(`**Raw: JSON formatted**` result_json)
 
     logInfo(`Completed viewing raw for note ID {note.id}`)
     logInfo(`==================================================`)
 }
 
-// リアクションの詳細を取得するボタンの登録
+// ノートのRawデータを表示するアクションを登録
 Plugin:register_note_action(`</>Raw` @(note) {misskeyNoteRawViewer(note)})
